@@ -3,23 +3,116 @@ package main
 import (
     "fmt"
     "flag"
+    "math"
     "os"
-    "github.com/mackrics/go-orm/internal/calculation"
-    "github.com/mackrics/go-orm/internal/fronend"
+    "html/template"
+    "net/http"
+    "strconv"
 )
+
+var tmpl *template.Template
+
+func init() {
+    // Parse the template file
+    var err error
+    tmpl, err = template.ParseFiles("template.html")
+    if err != nil {
+        panic(err)
+    }
+}
+
+type PageData struct {
+    Message string
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    // Execute the template
+    err := tmpl.Execute(w, PageData{})
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+func submitHandler(w http.ResponseWriter, r *http.Request) {
+    // Parse form data
+    err := r.ParseForm()
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    // Get the submitted values and convert them to numeric values:
+
+    number1 := r.Form.Get("number1")
+    number2 := r.Form.Get("number2")
+
+    number1n,_ := strconv.ParseFloat(number1, 64)
+    number2n,_ := strconv.ParseFloat(number2, 64)
+    eorm := calc_orm(number1n, number2n, 2, "Epley")
+    // You can perform operations with the numeric values here
+    // Convert the sum from float to string:
+    eorms := strconv.FormatFloat(eorm, 'f', 2, 64)
+
+    // Display a message
+    message := "Numbers submitted: Number 1 = " + number1 + ", Number 2 = " + number2 + ", Sum = " + eorms
+
+    // Render the template with the message
+    err = tmpl.Execute(w, PageData{Message: message})
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+func serve_site() {
+    // Setup HTTP routes
+    http.HandleFunc("/", handler)
+    http.HandleFunc("/submit", submitHandler)
+
+    // Start the server
+    http.ListenAndServe(":8080", nil)
+}
+
+
+
+func roundFloat(number float64, decimals int) float64 {
+  factor := math.Pow(10, float64(decimals))
+  roundedNumber := math.Round(number*factor) / factor
+  return roundedNumber
+}
+
+func calc_orm(weight float64, reps float64, precision int, formula string) float64 {
+  var prettyEORM float64
+  if formula == "Epley" {
+    eorm := weight * (1 + reps/30)
+    prettyEORM = roundFloat(eorm, precision)
+  } else if formula == "Mayhew" {
+    eorm := weight * ( 1 / (0.55 + (0.419 * math.Exp((-0.055 * reps)))))
+    prettyEORM = roundFloat(eorm, precision)
+  } else {
+    flag.Usage()
+    os.Exit(1)
+  }
+  return(prettyEORM)
+}
+
 
 func main() {
   weight    := flag.Float64("w", 0, "The weight (required)")
   reps      := flag.Float64("r", 0, "The number of repetitions (required)")
   precision := flag.Int("p", 2, "Precision of estimated orm")
   formula   := flag.String("f", "Epley", "The formula used to calculate the estimated ORM (Mayhew or Epley)")
-  
-  flag.Parse()
 
-  if *weight == 0 || *reps == 0 {
-    flag.Usage()
-    os.Exit(1)
+  if len(os.Args) == 1 {
+    if os.Args[1] == "serve" {
+      serve_site()
+    } 
+  } else {
+    flag.Parse()
+    if *weight == 0 || *reps == 0 {
+      flag.Usage()
+      os.Exit(1)
+    }
+    eorm := calc_orm(*weight, *reps, *precision, *formula)
+    fmt.Println(eorm)
   }
-  eorm := calc_orm(*weight, *reps, *precision, *formula)
-  fmt.Println(eorm)
 }
