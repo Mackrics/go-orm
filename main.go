@@ -104,7 +104,7 @@ func main() {
 
   if len(os.Args) == 2 {
     if os.Args[1] == "serve" {
-      serve_site(":8080")
+      serve_site(":6080")
     } 
   } else {
     flag.Parse()
