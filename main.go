@@ -46,16 +46,15 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
     weight := r.Form.Get("weight")
     reps := r.Form.Get("reps")
     formula := r.Form.Get("formula")
+    unit := r.Form.Get("unit")
 
     weightn,_ := strconv.ParseFloat(weight, 64)
     repsn,_ := strconv.ParseFloat(reps, 64)
     eorm := calc_orm(weightn, repsn, 2, formula)
-    // You can perform operations with the numeric values here
-    // Convert the sum from float to string:
     eorms := strconv.FormatFloat(eorm, 'f', 2, 64)
 
     // Display a message
-    message := "Your estimated one rep max is: " + eorms
+    message := "Your estimated one rep max is: " + eorms + " " + unit
 
     // Render the template with the message
     err = tmpl.Execute(w, PageData{Message: message})
