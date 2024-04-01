@@ -54,7 +54,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
     eorms := strconv.FormatFloat(eorm, 'f', 2, 64)
 
     // Display a message
-    message := "Your estimated one rep max is: " + eorms + " " + unit
+    message := "You lifted " + weight + " " + unit + " for " + reps + " repetitions. " + "Your estimated one rep max is: " + eorms + " " + unit + ", using the " + formula + " formula."
 
     // Render the template with the message
     err = tmpl.Execute(w, PageData{Message: message})
