@@ -43,18 +43,18 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
     // Get the submitted values and convert them to numeric values:
 
-    number1 := r.Form.Get("number1")
-    number2 := r.Form.Get("number2")
+    weight := r.Form.Get("weight")
+    reps := r.Form.Get("reps")
 
-    number1n,_ := strconv.ParseFloat(number1, 64)
-    number2n,_ := strconv.ParseFloat(number2, 64)
-    eorm := calc_orm(number1n, number2n, 2, "Epley")
+    weightn,_ := strconv.ParseFloat(weight, 64)
+    repsn,_ := strconv.ParseFloat(reps, 64)
+    eorm := calc_orm(weightn, repsn, 2, "Epley")
     // You can perform operations with the numeric values here
     // Convert the sum from float to string:
     eorms := strconv.FormatFloat(eorm, 'f', 2, 64)
 
     // Display a message
-    message := "Numbers submitted: Number 1 = " + number1 + ", Number 2 = " + number2 + ", Sum = " + eorms
+    message := "Your estimated one rep max is: " + eorms
 
     // Render the template with the message
     err = tmpl.Execute(w, PageData{Message: message})
@@ -63,13 +63,13 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
     }
 }
 
-func serve_site() {
+func serve_site(port string) {
     // Setup HTTP routes
     http.HandleFunc("/", handler)
     http.HandleFunc("/submit", submitHandler)
 
     // Start the server
-    http.ListenAndServe(":8080", nil)
+    http.ListenAndServe(port, nil)
 }
 
 
@@ -102,9 +102,9 @@ func main() {
   precision := flag.Int("p", 2, "Precision of estimated orm")
   formula   := flag.String("f", "Epley", "The formula used to calculate the estimated ORM (Mayhew or Epley)")
 
-  if len(os.Args) == 1 {
+  if len(os.Args) == 2 {
     if os.Args[1] == "serve" {
-      serve_site()
+      serve_site(":8080")
     } 
   } else {
     flag.Parse()
